@@ -68,11 +68,8 @@ namespace Friendly.UWP
             }
 
             //ビルド
-            dte.Solution.SolutionBuild.Build();
-
-            //配置
-            dte.Solution.SolutionBuild.Deploy();
-
+            dte.Solution.SolutionBuild.Build(true);
+            
             //ブレイクを設定
             var injectionBreak = dte.Debugger.Breakpoints.Add(InjectionBreakPoint);
             dte.Debugger.Go();
