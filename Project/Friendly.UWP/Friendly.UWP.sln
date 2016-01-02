@@ -18,6 +18,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{148A55D6-7
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{ED698033-8783-498E-80BC-F4A016E9108A}"
 	ProjectSection(SolutionItems) = preProject
+		..\.nuget\Friendly.UWP.Core.nuspec = ..\.nuget\Friendly.UWP.Core.nuspec
 		..\.nuget\Friendly.UWP.nuspec = ..\.nuget\Friendly.UWP.nuspec
 		..\.nuget\NuGet.Config = ..\.nuget\NuGet.Config
 		..\.nuget\NuGet.exe = ..\.nuget\NuGet.exe
@@ -106,23 +107,5 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{A2E5E228-2676-4D61-BDEA-ABD47BDD0167} = {148A55D6-76A5-42B4-B561-6EB56D78F7AA}
-	EndGlobalSection
-	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 5
-		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccTeamFoundationServer = https://codeer.visualstudio.com/defaultcollection
-		SccLocalPath0 = .
-		SccProjectUniqueName1 = Friendly.UWP.csproj
-		SccLocalPath1 = .
-		SccProjectUniqueName2 = ..\\Friendly.UWP.Test\\Friendly.UWP.Test.csproj
-		SccProjectTopLevelParentUniqueName2 = Friendly.UWP.sln
-		SccProjectName2 = ../Friendly.UWP.Test
-		SccLocalPath2 = ..\\Friendly.UWP.Test
-		SccProjectUniqueName3 = ..\\Friendly.UWP.Core\\Friendly.UWP.Core.csproj
-		SccProjectName3 = ../Friendly.UWP.Core
-		SccLocalPath3 = ..\\Friendly.UWP.Core
-		SccProjectUniqueName4 = ..\\Friendly.Core\\Friendly.Core.csproj
-		SccProjectName4 = ../Friendly.Core
-		SccLocalPath4 = ..\\Friendly.Core
 	EndGlobalSection
 EndGlobal

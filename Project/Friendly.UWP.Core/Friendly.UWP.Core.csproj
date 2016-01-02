@@ -133,7 +133,9 @@
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\WindowsXaml\v$(VisualStudioVersion)\Microsoft.Windows.UI.Xaml.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>if $(ConfigurationName) == Release Copy "$(TargetPath)" "../../../Friendly.UWP/Resources/$(TargetFileName)"</PostBuildEvent>
+    <PostBuildEvent>if $(ConfigurationName) == Release Copy "$(TargetPath)" "../../../Friendly.UWP/Resources/$(TargetFileName)"
+if $(ConfigurationName) == Release "../../../.nuget/nuget" pack "../../../.nuget/Friendly.UWP.Core.nuspec"
+</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
