@@ -67,6 +67,12 @@ namespace Friendly.UWP
                 _breaks = _visualStudio.Type(GetType()).DisableBreak(PinHelper.GetAppVar(dte));
             }
 
+            //ビルド
+            dte.Solution.SolutionBuild.Build();
+
+            //配置
+            dte.Solution.SolutionBuild.Deploy();
+
             //ブレイクを設定
             var injectionBreak = dte.Debugger.Breakpoints.Add(InjectionBreakPoint);
             dte.Debugger.Go();

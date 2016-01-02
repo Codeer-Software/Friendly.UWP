@@ -15,12 +15,11 @@ namespace Friendly.UWP.Test
             using (var app = new UWPAppFriend(new ByVisualStudio(Path.GetFullPath("../../../TargetApp/TargetApp.sln"))
             {
                 VisualStudioPath = @"C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\devenv.exe",
-             /*   ChangeVisualStudioSetting = (vs, dteSrc)=>
+                ChangeVisualStudioSetting = (vs, dteSrc)=>
                 {
                     var dte = dteSrc.Pin<DTE2>();
-                    int count = dte.Solution.SolutionBuild.SolutionConfigurations.Count;
-
-                }*/
+                    dte.Solution.SolutionBuild.SolutionConfigurations.Item(3).Activate();
+                }
             }))
             {
                 string val = app.Type("TargetApp.MyClass").Func(3);
