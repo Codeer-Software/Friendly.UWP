@@ -70,8 +70,10 @@ namespace Friendly.UWP
             //ブレイクを設定
             var injectionBreak = dte.Debugger.Breakpoints.Add(InjectionBreakPoint);
             dte.Debugger.Go();
-            injectionBreak.Item(1).Delete();
-            
+            if (injectionBreak.Count == 1)
+            {
+                injectionBreak.Item(1).Delete();
+            }
             //対象のプロセスID
             _uwpProcessId = dte.Debugger.CurrentProcess.ProcessID;
 

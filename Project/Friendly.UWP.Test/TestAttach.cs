@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Codeer.Friendly.Dynamic;
 using Codeer.Friendly;
+using System.IO;
 
 namespace Friendly.UWP.Test
 {
@@ -44,14 +45,13 @@ namespace Friendly.UWP.Test
         [TestMethod]
         public void Test()
         {
-            using (var app = new UWPAppFriend(new ByVisualStudio(@"C:\tfs\codeer\Research\UWP\TargetApp\TargetApp.sln")
+            using (var app = new UWPAppFriend(new ByVisualStudio(Path.GetFullPath("../../../TargetApp/TargetApp.sln"))
             {
                 VisualStudioPath = @"C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\devenv.exe",
                 ContinueDebuging = false
             }))
             {
                 string val = app.Type("TargetApp.MyClass").Func(3);
-            //    app.Type("TargetApp.MyClass2").Func(3);
                 Assert.AreEqual("3", val);
             }
         }
