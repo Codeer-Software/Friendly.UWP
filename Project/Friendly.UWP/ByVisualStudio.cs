@@ -19,7 +19,7 @@ namespace Friendly.UWP
         public string VisualStudioPath { get; set; }
         public bool ContinueDebuging { get; set; }
         public string InjectionBreakPoint { get; set; } = "App.InitializeComponent";
-        public Action<WindowsAppFriend, DTE2> ChangeVisualStudioSetting { get; set; }
+        public Action<WindowsAppFriend, AppVar> ChangeVisualStudioSetting { get; set; }
         static Type DTEType { get { return typeof(_DTE); } }
 
         WindowsAppFriend _visualStudio;
@@ -58,7 +58,7 @@ namespace Friendly.UWP
             //VisualStudioの設定変更
             if (ChangeVisualStudioSetting != null)
             {
-                ChangeVisualStudioSetting(_visualStudio, dte);
+                ChangeVisualStudioSetting(_visualStudio, PinHelper.GetAppVar(dte));
             }
             
             //ブレイクを全部無効にする
@@ -133,14 +133,14 @@ namespace Friendly.UWP
                 {
                     continue;
                 }
+                
 
-                /*
                 //@@@
                 if (e.MainWindowTitle.IndexOf("Friendly.UWP") != -1)
                 {
                     continue;
                 }
-                */
+
 
                 using (var app = new WindowsAppFriend(e))
                 {
