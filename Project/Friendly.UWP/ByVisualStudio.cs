@@ -18,7 +18,7 @@ namespace Friendly.UWP
         public string Uri { get; set; } = "http://localhost:8081/";
         public string VisualStudioPath { get; set; }
         public bool ContinueDebuging { get; set; }
-        public string InjectionBreakPoint { get; set; } = "Program.Main";
+        public string InjectionBreakPoint { get; set; } = "App.OnLaunched";
         public Action<WindowsAppFriend, AppVar> ChangeVisualStudioSetting { get; set; }
         static Type DTEType { get { return typeof(_DTE); } }
 
