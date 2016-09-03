@@ -27,4 +27,9 @@ namespace TargetApp
             this.InitializeComponent();
         }
     }
+
+    public class MyClass
+    {
+        public static string Func(int val) => val.ToString();
+    }
 }

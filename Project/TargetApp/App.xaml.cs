@@ -28,6 +28,9 @@ namespace TargetApp
         /// </summary>
         public App()
         {
+            Microsoft.ApplicationInsights.WindowsAppInitializer.InitializeAsync(
+                Microsoft.ApplicationInsights.WindowsCollectors.Metadata |
+                Microsoft.ApplicationInsights.WindowsCollectors.Session);
             this.InitializeComponent();
             this.Suspending += OnSuspending;
         }
@@ -39,14 +42,12 @@ namespace TargetApp
         /// <param name="e">起動の要求とプロセスの詳細を表示します。</param>
         protected override void OnLaunched(LaunchActivatedEventArgs e)
         {
-
 #if DEBUG
             if (System.Diagnostics.Debugger.IsAttached)
             {
                 this.DebugSettings.EnableFrameRateCounter = true;
             }
 #endif
-
             Frame rootFrame = Window.Current.Content as Frame;
 
             // ウィンドウに既にコンテンツが表示されている場合は、アプリケーションの初期化を繰り返さずに、
@@ -67,15 +68,18 @@ namespace TargetApp
                 Window.Current.Content = rootFrame;
             }
 
-            if (rootFrame.Content == null)
+            if (e.PrelaunchActivated == false)
             {
-                // ナビゲーション スタックが復元されない場合は、最初のページに移動します。
-                // このとき、必要な情報をナビゲーション パラメーターとして渡して、新しいページを
-                //構成します
-                rootFrame.Navigate(typeof(MainPage), e.Arguments);
+                if (rootFrame.Content == null)
+                {
+                    // ナビゲーション スタックが復元されない場合は、最初のページに移動します。
+                    // このとき、必要な情報をナビゲーション パラメーターとして渡して、新しいページを
+                    //構成します
+                    rootFrame.Navigate(typeof(MainPage), e.Arguments);
+                }
+                // 現在のウィンドウがアクティブであることを確認します
+                Window.Current.Activate();
             }
-            // 現在のウィンドウがアクティブであることを確認します
-            Window.Current.Activate();
         }
 
         /// <summary>

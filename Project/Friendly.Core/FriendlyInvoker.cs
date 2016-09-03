@@ -103,7 +103,7 @@ namespace Friendly.Core
                 case ProtocolType.VarInitialize:
                     return VarInitialize(varManager, info);
                 case ProtocolType.VarNew:
-                    return VarNew(varManager, typeFinder, info);
+                    return VarNew(async, varManager, typeFinder, info);
                 case ProtocolType.BinOff:
                     return BinOff(varManager, info);
                 case ProtocolType.GetValue:
@@ -158,11 +158,12 @@ namespace Friendly.Core
         /// <summary>
         /// 生成処理呼び出し。
         /// </summary>
+        /// <param name="async">非同期実行。</param>
         /// <param name="varManager">変数管理。</param>
         /// <param name="typeFinder">タイプ検索。</param>
         /// <param name="info">呼び出し情報。</param>
         /// <returns>戻り値情報。</returns>
-        static ReturnInfo VarNew(VarPool varManager, TypeFinder typeFinder, ProtocolInfo info)
+        static ReturnInfo VarNew(IAsyncInvoke async, VarPool varManager, TypeFinder typeFinder, ProtocolInfo info)
         {
             //処理可能な型であるか判断
             Type type = typeFinder.GetType(info.TypeFullName);
@@ -231,7 +232,14 @@ namespace Friendly.Core
             }
 
             //インスタンス生成
-            object instance = constructorList[0].Invoke(args);
+            bool isCreated = false;//TODO
+            object instance = null;
+            async.Execute(() =>
+            {
+                instance = constructorList[0].Invoke(args);
+                isCreated = true;
+            });
+            while (!isCreated) ;
 
             //ref, outの解決
             ReflectArgsAfterInvoke(varManager, info.Arguments, args);
