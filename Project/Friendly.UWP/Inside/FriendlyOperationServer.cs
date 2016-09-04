@@ -126,7 +126,7 @@ namespace Friendly.UWP.Inside
 
         ReturnInfo GetReturnInfo()
         {
-            HttpListenerContext context = _listener.GetContext();
+            var context = _listener.GetContext();
             using (var response = context.Response)
             {
                 var reader = new StreamReader(context.Request.InputStream);

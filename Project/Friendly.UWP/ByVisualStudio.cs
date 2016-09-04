@@ -115,9 +115,7 @@ namespace Friendly.UWP
         }
 
         static void RestoreBreak(List<Tuple<Breakpoint, bool>> breaks)
-        {
-            breaks.ForEach(e => e.Item1.Enabled = e.Item2);
-        }
+            => breaks.ForEach(e => e.Item1.Enabled = e.Item2);
 
         static DTE2 GetDTE2(WindowsAppFriend app)
         {
@@ -137,13 +135,11 @@ namespace Friendly.UWP
                     continue;
                 }
                 
-
-                //@@@
+                //for developing.
                 if (e.MainWindowTitle.IndexOf("Friendly.UWP") != -1)
                 {
                     continue;
                 }
-
 
                 using (var app = new WindowsAppFriend(e))
                 {

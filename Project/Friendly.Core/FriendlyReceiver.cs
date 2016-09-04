@@ -21,18 +21,15 @@ namespace Friendly.Core
             Instance.StartLoopCore(uri, invoker);
         }
 
+        public void Stop() => _alive = false;
+
         void StartLoopCore(string uri, Action<Action> invoker)
         {
             _uri = uri;
             _control = new FriendlyControl(invoker);
             var tsk = Task.Factory.StartNew(Loop);
         }
-
-        public void Stop()
-        {
-            _alive = false;
-        }
-
+        
         void Loop()
         {
             _alive = true;
