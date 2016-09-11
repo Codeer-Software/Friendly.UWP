@@ -5,9 +5,18 @@
     xmlns:local="using:TargetApp"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    mc:Ignorable="d">
+    mc:Ignorable="d" Width="532.667" Height="700.667">
 
-    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-
+    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" HorizontalAlignment="Left" Margin="0,0,-0.333,-0.333" Width="533">
+        <FlyoutBase.AttachedFlyout>
+            <MenuFlyout/>
+        </FlyoutBase.AttachedFlyout>
+        <Button x:Name="button1" Content="Button" HorizontalAlignment="Left" Margin="10,80,0,0" VerticalAlignment="Top" Click="button1_Click"/>
+        <Button Command="{Binding Execute}" x:Name="button2" Content="Button" HorizontalAlignment="Left" Margin="10,172,0,0" VerticalAlignment="Top" Click="button2_Click"/>
+        <TextBox Text="{Binding TextValue1}" x:Name="textBox" HorizontalAlignment="Left" Margin="10,269,0,0" TextWrapping="Wrap" VerticalAlignment="Top"/>
+        <CheckBox x:Name="checkBox" Content="CheckBox" HorizontalAlignment="Left" Margin="10,355,0,0" VerticalAlignment="Top"/>
+        <ComboBox x:Name="comboBox" HorizontalAlignment="Left" Margin="10,392,0,0" VerticalAlignment="Top" Width="120"/>
+        <ListBox x:Name="listBox" HorizontalAlignment="Left" Height="215" Margin="10,445,0,0" VerticalAlignment="Top" Width="120"/>
+        <RadioButton x:Name="radioButton" Content="RadioButton" HorizontalAlignment="Left" Margin="10,306,0,0" VerticalAlignment="Top"/>
     </Grid>
 </Page>

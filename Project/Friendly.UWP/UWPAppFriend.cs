@@ -8,13 +8,16 @@ namespace Friendly.UWP
 {
     public class UWPAppFriend : AppFriend, IDisposable
     {
-        Core _core = new Core();
+        Core _core;
         IUWPControl _starter;
 
         protected override IFriendlyConnector FriendlyConnector { get { return _core; } }
 
+        public Window CurrentWindow => new Window(this.Type("Windows.UI.Xaml.Window").Current);
+
         public UWPAppFriend(IUWPControl starter)
         {
+            _core = new Core() { App = this };
             _core.Server.StartLoop(starter.Uri);
             _starter = starter;
             starter.Start();
@@ -26,7 +29,7 @@ namespace Friendly.UWP
         class Core : IFriendlyConnector
         {
             public FriendlyOperationServer Server { get; private set; } = new FriendlyOperationServer();
-            public AppFriend App { get; private set; }
+            public AppFriend App { get; set; }
             public object Identity { get { return App; } }
 
             public ReturnInfo SendAndReceive(ProtocolInfo info)

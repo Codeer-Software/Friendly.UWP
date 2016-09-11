@@ -85,10 +85,6 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Friendly.Core\Friendly.Core.csproj">
-      <Project>{b7eec6b8-659a-4c83-b814-38cb251bf593}</Project>
-      <Name>Friendly.Core</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Friendly.UWP\Friendly.UWP.csproj">
       <Project>{d35e2ba2-3f81-4a76-82c9-f318967c42ec}</Project>
       <Name>Friendly.UWP</Name>

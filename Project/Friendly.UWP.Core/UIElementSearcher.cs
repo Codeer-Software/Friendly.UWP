@@ -1,0 +1,161 @@
+﻿using Codeer.Friendly.DotNetExecutor;
+using System.Collections.Generic;
+using System.Reflection;
+using Windows.UI.Xaml;
+
+namespace Friendly.UWP.Core
+{
+#if ENG
+    /// <summary>
+    /// Search by binding or type.
+    /// In order to run inside the target process, you will need to injection the RM.Friendly.WPFStandardControls.3.dll.
+    /// Use the RM.Friendly.WPFStandardControls.WPFStandardControls_3.Injection method.
+    /// </summary>
+#else
+    /// <summary>
+    /// Binding情報、タイプから要素を取得するためのユーティリティー
+    /// 対象プロセス内部で実行するためには、RM.Friendly.WPFStandardControls.3.dllをインジェクションする必要があります。
+    /// RM.Friendly.WPFStandardControls.WPFStandardControls_3.Injectionメソッドを利用してください。
+    /// </summary>
+#endif
+    public static class UIElementSearcher
+    {
+#if ENG
+        /// <summary>
+        /// Search by binding from DependencyObject collection.
+        /// </summary>
+        /// <typeparam name="T">Type of collection.</typeparam>
+        /// <param name="collection">DependencyObject collection.</param>
+        /// <param name="path">Binding path.</param>
+        /// <param name="dataItem">DataItem.</param>
+        /// <returns>Hit elements.</returns>
+#else
+        /// <summary>
+        /// Binding情報から要素を検索。
+        /// </summary>
+        /// <typeparam name="T">コレクションのタイプ。</typeparam>
+        /// <param name="collection">DependencyObjectのコレクション。</param>
+        /// <param name="path">バインディングパス。</param>
+        /// <param name="dataItem">DataItem。</param>
+        /// <returns>ヒットした要素。</returns>
+#endif
+        public static IEnumerable<T> ByBinding<T>(this IEnumerable<T> collection, string path, object dataItem = null) where T : DependencyObject
+        {
+            List<T> list = new List<T>();
+            foreach (var e in collection)
+            {
+                if (IsMatch(e, path, dataItem))
+                {
+                    list.Add(e);
+                }
+            }
+            return list;
+        }
+
+        //操作プロセスからの呼び出し
+        public static IEnumerable<DependencyObject> ByBinding(IEnumerable<DependencyObject> collection, string path, object dataItem = null)
+        {
+            return ByBinding<DependencyObject>(collection, path, dataItem);
+        }
+
+#if ENG
+        /// <summary>
+        /// Search by Type from DependencyObject collection.
+        /// </summary>
+        /// <typeparam name="T">Target type.</typeparam>
+        /// <param name="collection">DependencyObject collection.</param>
+        /// <returns>Hit elements.</returns>
+#else
+        /// <summary>
+        /// タイプから要素を検索。
+        /// </summary>
+        /// <typeparam name="T">検索対象のタイプ。</typeparam>
+        /// <param name="collection">DependencyObjectのコレクション。</param>
+        /// <returns>ヒットした要素。</returns>
+#endif
+        public static IEnumerable<T> ByType<T>(this IEnumerable<DependencyObject> collection) where T : DependencyObject
+        {
+            List<T> list = new List<T>();
+            foreach (var e in ByType(collection, typeof(T).FullName))
+            {
+                list.Add((T)e);
+            }
+            return list;
+        }
+
+#if ENG
+        /// <summary>
+        /// Search by Type from DependencyObject collection.
+        /// </summary>
+        /// <param name="collection">DependencyObject collection.</param>
+        /// <param name="typeFullName">Target type.</param>
+        /// <returns>Hit elements.</returns>
+#else
+        /// <summary>
+        /// タイプから要素を検索。
+        /// </summary>
+        /// <param name="collection">DependencyObjectのコレクション。</param>
+        /// <param name="typeFullName">検索対象のタイプ。</param>
+        /// <returns>ヒットした要素。</returns>
+#endif
+        public static IEnumerable<DependencyObject> ByType(IEnumerable<DependencyObject> collection, string typeFullName)
+        {
+            List<DependencyObject> list = new List<DependencyObject>();
+            var finder = new TypeFinder();
+            var type = finder.GetType(typeFullName);
+            foreach (var e in collection)
+            {
+                if (type.IsAssignableFrom(e.GetType()))
+                {
+                    list.Add(e);
+                }
+            }
+            return list;
+        }
+
+        static bool IsMatch(DependencyObject obj, string path, object dataItem = null)
+        {
+            var frameworkElement = obj as FrameworkElement;
+            foreach (var property in GetDependencyProperties(obj))
+            {
+                var binding = frameworkElement.GetBindingExpression(property);
+                if (binding == null)
+                {
+                    continue;
+                }
+                if (binding.ParentBinding?.Path?.Path != path)
+                {
+                    continue;
+                }
+                if (dataItem == null)
+                {
+                    return true;
+                }
+                if (ReferenceEquals(binding.DataItem, dataItem))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        static IEnumerable<DependencyProperty> GetDependencyProperties(object obj)
+        {
+            List<DependencyProperty> list = new List<DependencyProperty>();
+            var type = obj.GetType();
+            while (type != null)
+            {
+                foreach (var prop in type.GetTypeInfo().DeclaredProperties)
+                {
+                    if (prop.PropertyType == typeof(DependencyProperty) &&
+                        prop.GetMethod.IsStatic)
+                    {
+                        list.Add((DependencyProperty)prop.GetValue(null));
+                    }
+                }
+                type = type.GetTypeInfo().BaseType;
+            }
+            return list;
+        }
+    }
+}
