@@ -3,9 +3,6 @@ using System.Runtime.Serialization;
 
 namespace Friendly.Core
 {
-    /// <summary>
-    /// ローカライズ済みリソース。
-    /// </summary>
     [DataContract]
     public class ResourcesLocal
     {
@@ -63,19 +60,13 @@ namespace Friendly.Core
         public string UnknownTypeInfoFormat { get; set; }
         [DataMember]
         public string ErrorAttachOtherDomainsNeedNet4 { get; set; }
-
-        /// <summary>
-        /// 初期化。
-        /// </summary>
+        
         public static void Initialize()
         {
             Instance = new ResourcesLocal();
             Instance.InitializeCore();
         }
         
-        /// <summary>
-        /// コンストラクタ。
-        /// </summary>
         void InitializeCore()
         {
             ErrorAppCommunication = Resources.ErrorAppCommunication;

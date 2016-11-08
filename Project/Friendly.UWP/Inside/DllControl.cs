@@ -10,10 +10,10 @@ namespace Friendly.UWP.Inside
     static class DllControl
     {
         /// <summary>
-        /// DLLのインストール。
+        /// Install dll.
         /// </summary>
-        /// <param name="dllPath">DLLのパス。</param>
-        /// <param name="dllData">DLLのバイナリデータ。</param>
+        /// <param name="dllPath">path of dll.</param>
+        /// <param name="asm">assembly.</param>
         internal static void InstallDll(string dir, Assembly asm)
         {
             var dllPath = Path.Combine(dir, Path.GetFileName(asm.Location));
@@ -21,10 +21,10 @@ namespace Friendly.UWP.Inside
         }
 
         /// <summary>
-        /// DLLのインストール。
+        /// Install dll.
         /// </summary>
-        /// <param name="dllPath">DLLのパス。</param>
-        /// <param name="dllData">DLLのバイナリデータ。</param>
+        /// <param name="dllPath">path of dll.</param>
+        /// <param name="dllData">binary of dll.</param>
         internal static void InstallDll(string dllPath, byte[] dllData)
         {
             string dir = Path.GetDirectoryName(dllPath);
@@ -42,12 +42,12 @@ namespace Friendly.UWP.Inside
                     byte[] buf = File.ReadAllBytes(dllPath);
                     if (IsMatchBinary(buf, dllData))
                     {
-                        return;//インストール済み
+                        return;//installed.
                     }
                 }
                 catch { }
 
-                //ディレクトリ作成               
+                //make directory.        
                 try
                 {
                     Directory.CreateDirectory(dir);
@@ -56,7 +56,7 @@ namespace Friendly.UWP.Inside
                 {
                     throw new FriendlyOperationException(Resources.ErrorFriendlySystem);
                 }
-                //古いファイルを削除
+                //delete old file.
                 try
                 {
                     if (File.Exists(dllPath))
@@ -69,7 +69,7 @@ namespace Friendly.UWP.Inside
                     throw new FriendlyOperationException(Resources.ErrorBinaryInstall
                         + Environment.NewLine + dllPath);
                 }
-                //書き込み
+                //write.
                 try
                 {
                     File.WriteAllBytes(dllPath, dllData);
@@ -81,17 +81,16 @@ namespace Friendly.UWP.Inside
             }
             finally
             {
-                //ミューテックスを解放する
                 mutex.ReleaseMutex();
             }
         }
 
         /// <summary>
-        /// バイナリの一致チェック。
+        /// compare binary.
         /// </summary>
-        /// <param name="buf1">バイナリ1。</param>
-        /// <param name="buf2">バイナリ2。</param>
-        /// <returns>一致するか。</returns>
+        /// <param name="buf1">binary1.</param>
+        /// <param name="buf2">binary2.</param>
+        /// <returns>is match.</returns>
         private static bool IsMatchBinary(byte[] buf1, byte[] buf2)
         {
             if (buf1.Length != buf2.Length)

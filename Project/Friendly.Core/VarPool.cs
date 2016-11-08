@@ -2,20 +2,12 @@
 
 namespace Friendly.Core
 {
-	/// <summary>
-	/// .Netの変数管理。
-    /// このクラスで定義されているメソッドに関してはスレッドセーフで扱うことができる。
-	/// </summary>
 	class VarPool
 	{
 		UniqueNoManager _varAddressManager = new UniqueNoManager();
         Dictionary<int, VarAndType> _handleAndObject = new Dictionary<int, VarAndType>();
         Dictionary<int, int> _keepAlive = new Dictionary<int, int>();
-
-        /// <summary>
-        /// 存命登録。
-        /// </summary>
-        /// <param name="varAddress">変数アドレス。</param>
+        
         internal void KeepAlive(VarAddress varAddress)
         {
             lock (this)
@@ -31,10 +23,6 @@ namespace Friendly.Core
             }
         }
 
-        /// <summary>
-        /// 存命解除。
-        /// </summary>
-        /// <param name="varAddress">変数アドレス。</param>
         internal void FreeKeepAlive(VarAddress varAddress)
         {
             lock (this)
@@ -50,7 +38,6 @@ namespace Friendly.Core
                     _keepAlive.Remove(varAddress.Core);
                     if (!_handleAndObject.ContainsKey(varAddress.Core))
                     {
-                        //すでに変数プールから削除されているなら番号解放
                         _varAddressManager.FreeNo(varAddress.Core);
                     }
                 }
@@ -60,12 +47,7 @@ namespace Friendly.Core
                 }
             }
         }
-
-		/// <summary>
-		/// 追加。
-		/// </summary>
-		/// <param name="obj">オブジェクト。</param>
-        /// <returns>変数アドレス。</returns>
+        
 		internal VarAddress Add(object obj)
 		{
 			lock (this)
@@ -80,11 +62,6 @@ namespace Friendly.Core
 			}
 		}
 
-		/// <summary>
-		/// 削除。
-		/// </summary>
-        /// <param name="varAddress">変数アドレス。</param>
-		/// <returns>成否。</returns>
         internal bool Remove(VarAddress varAddress)
 		{
 			lock (this)
@@ -96,18 +73,12 @@ namespace Friendly.Core
                 _handleAndObject.Remove(varAddress.Core);
                 if (!_keepAlive.ContainsKey(varAddress.Core))
                 {
-                    //存命中でなければ番号解放
                     _varAddressManager.FreeNo(varAddress.Core);
                 }
 				return true;
 			}
 		}
-
-        /// <summary>
-        /// 変数取得。
-        /// </summary>
-        /// <param name="varAddress">変数アドレス。</param>
-        /// <returns>変数。</returns>
+        
         internal VarAndType GetVarAndType(VarAddress varAddress)
         {
             lock (this)
@@ -121,29 +92,17 @@ namespace Friendly.Core
             }
         }
 
-        /// <summary>
-		/// オブジェクトの設定。
-		/// </summary>
-        /// <param name="varAddress">変数アドレス。</param>
-		/// <param name="obj">オブジェクト。</param>
         internal void SetObject(VarAddress varAddress, object obj)
 		{
 			lock (this)
 			{
-                //非同期実行時には、値を設定に来ても、受け取る変数自体が削除されていることがありうる
                 if (_handleAndObject.ContainsKey(varAddress.Core))
                 {
                     _handleAndObject[varAddress.Core] = new VarAndType(obj);
                 }
 			}
 		}
-
-        /// <summary>
-        /// 指定の変数アドレスが存在しない、またはnullであるか。
-        /// このメソッドはスレッドセーフである。
-        /// </summary>
-        /// <param name="varAddress">変数アドレス。</param>
-        /// <returns>指定の変数アドレスが存在しない、またはnullであるか。</returns>
+        
         internal bool IsEmptyVar(VarAddress varAddress)
         {
             lock (this)

@@ -66,32 +66,27 @@ namespace Friendly.Core
             {
                 DataContractableTypes.Add(typeInfo.AsType());
             }
-
-            //ベースクラス
+            
             if (typeInfo.BaseType != null)
             {
                 FindAllType(typeInfo.BaseType.GetTypeInfo());
             }
-
-            //インターフェイス
+            
             foreach (var e in typeInfo.ImplementedInterfaces)
             {
                 FindAllType(e.GetTypeInfo());
             }
-
-            //フィールド
+            
             foreach (var e in typeInfo.DeclaredFields)
             {
                 FindAllType(e.FieldType.GetTypeInfo());
             }
-
-            //プロパティー
+            
             foreach (var e in typeInfo.DeclaredProperties)
             {
                 FindAllType(e.PropertyType.GetTypeInfo());
             }
-
-            //メソッド
+            
             foreach (var e in typeInfo.DeclaredMethods)
             {
                 FindAllType(e.ReturnType.GetTypeInfo());
@@ -100,8 +95,7 @@ namespace Friendly.Core
                     FindAllType(ee.ParameterType.GetTypeInfo());
                 }
             }
-
-            //コンストラクタ
+            
             foreach (var e in typeInfo.DeclaredConstructors)
             {
                 foreach (var ee in e.GetParameters())
@@ -109,8 +103,7 @@ namespace Friendly.Core
                     FindAllType(ee.ParameterType.GetTypeInfo());
                 }
             }
-
-            //イベント
+            
             foreach (var e in typeInfo.DeclaredEvents)
             {
                 FindAllType(e.GetType().GetTypeInfo());

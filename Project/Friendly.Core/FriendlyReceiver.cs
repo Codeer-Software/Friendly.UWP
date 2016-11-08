@@ -47,23 +47,18 @@ namespace Friendly.Core
         {
             var uri = new Uri(_uri);
 
-            //要求取得
             var protocolInfo = GetProtocolInfo(uri);
             if (protocolInfo == null)
             {
                 return;
             }
-
-            //実行
+            
             var ret = _control.Execute(protocolInfo);
-
-            //結果をサーバーに戻す
             SendReturnInfo(uri, ret);
         }
 
         static void SendReturnInfo(Uri uri, ReturnInfo returnInfo)
         {
-            //シリアライズ
             byte[] bin = null;
             using (var ms = new MemoryStream())
             {
@@ -71,8 +66,7 @@ namespace Friendly.Core
                 serializer.WriteObject(ms, returnInfo);
                 bin = ms.ToArray();
             }
-
-            //アップロードバッファに書き込み
+            
             var request = (HttpWebRequest)WebRequest.Create(uri);
             request.Method = "POST";
             request.ContentType = "application/x-www-form-urlencoded";
@@ -82,8 +76,7 @@ namespace Friendly.Core
             {
                 reqStream.Write(bin, 0, bin.Length);
             }
-
-            //送信
+            
             var response = request.GetResponseAsync();
             response.Wait();
             ((HttpWebResponse)response.Result).Dispose();
@@ -95,8 +88,7 @@ namespace Friendly.Core
             protocolGet.Method = "POST";
             var resProtocolGet = protocolGet.GetResponseAsync();
             resProtocolGet.Wait();
-
-            //レスポンス読み込み
+            
             using (var httpWebResponsex = (HttpWebResponse)resProtocolGet.Result)
             using (var reader = new StreamReader(httpWebResponsex.GetResponseStream()))
             {

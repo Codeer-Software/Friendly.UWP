@@ -2,19 +2,11 @@
 
 namespace Friendly.Core
 {
-	/// <summary>
-	/// 固有の番号管理。
-	/// </summary>
 	public class UniqueNoManager
 	{
 		int _no;
 		Dictionary<int, bool> _curretExistNo = new Dictionary<int, bool>();
-		
-		/// <summary>
-		/// 番号生成。
-		/// </summary>
-		/// <param name="no">番号。</param>
-		/// <returns>成否。</returns>
+
         public bool CreateNo(out int no)
 		{
 			no = 0;
@@ -33,10 +25,6 @@ namespace Friendly.Core
 			return true;
 		}
 
-		/// <summary>
-		/// 番号解放。
-		/// </summary>
-		/// <param name="no">番号。</param>
         public void FreeNo(int no)
 		{
 			_curretExistNo.Remove(no);

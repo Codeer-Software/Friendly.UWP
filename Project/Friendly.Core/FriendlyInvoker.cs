@@ -9,15 +9,8 @@ using System.Threading.Tasks;
 
 namespace Friendly.Core
 {
-    /// <summary>
-    /// 非同期実行インターフェイス。
-    /// </summary>
     interface IAsyncInvoke
     {
-        /// <summary>
-        /// 非同期実行。
-        /// </summary>
-        /// <param name="method">実行メソッド。</param>
         void Execute(Action method);
     }
 
@@ -47,20 +40,9 @@ namespace Friendly.Core
             Task.Factory.StartNew(()=> _invoke(method));
         }
     }
-
-    /// <summary>
-    /// .Netでの処理呼び出し。
-    /// </summary>
+    
     static class FriendlyInvoker
     {
-        /// <summary>
-        /// 処理呼び出し。
-        /// </summary>
-        /// <param name="async">非同期実行用。</param>
-        /// <param name="varManager">変数管理。</param>
-        /// <param name="typeFinder">タイプ検索。</param>
-        /// <param name="info">呼び出し情報。</param>
-        /// <returns>戻り値情報。</returns>
         internal static ReturnInfo Execute(Action<Action> invokeCore, VarPool varManager, TypeFinder typeFinder, ProtocolInfo info)
         {
             IAsyncInvoke invoke = new AsyncExecute(invokeCore);
@@ -86,15 +68,7 @@ namespace Friendly.Core
                 return Execute(invoke, varManager, typeFinder, info);
             }
         }
-
-        /// <summary>
-        /// 処理呼び出し。
-        /// </summary>
-        /// <param name="async">非同期実行用。</param>
-        /// <param name="varManager">変数管理。</param>
-        /// <param name="typeFinder">タイプ検索。</param>
-        /// <param name="info">呼び出し情報。</param>
-        /// <returns>戻り値情報。</returns>
+        
         internal static ReturnInfo Execute(IAsyncInvoke async, VarPool varManager, TypeFinder typeFinder, ProtocolInfo info)
         {
             switch (info.ProtocolType)
@@ -122,70 +96,49 @@ namespace Friendly.Core
             }
         }
 
-        /// <summary>
-        /// 空の変数であるか
-        /// </summary>
-        /// <param name="varManager">変数管理。</param>
-        /// <param name="info">呼び出し情報。</param>
-        /// <returns>戻り値情報。</returns>
         static ReturnInfo IsEmptyVar(VarPool varManager, ProtocolInfo info)
         {
             return new ReturnInfo(varManager.IsEmptyVar((VarAddress)info.Arguments[0]));
         }
-
-        /// <summary>
-        /// 変数初期化。
-        /// </summary>
-        /// <param name="varManager">変数管理。</param>
-        /// <param name="info">呼び出し情報。</param>
-        /// <returns>戻り値情報。</returns>
+        
         static ReturnInfo VarInitialize(VarPool varManager, ProtocolInfo info)
         {
-            //初期化は引数は1であること。
+            //arguments count is 1.
             if (info.Arguments.Length != 1)
             {
                 throw new InternalException();
             }
-
-            //引数の解決
+            
             object[] args;
             ResolveArgs(varManager, info.Arguments, out args);
 
-            //変数登録
+            //entry variable.
             return new ReturnInfo(varManager.Add(args[0]));
         }
 
         /// <summary>
-        /// 生成処理呼び出し。
+        /// create object.
         /// </summary>
-        /// <param name="async">非同期実行。</param>
-        /// <param name="varManager">変数管理。</param>
-        /// <param name="typeFinder">タイプ検索。</param>
-        /// <param name="info">呼び出し情報。</param>
-        /// <returns>戻り値情報。</returns>
         static ReturnInfo VarNew(IAsyncInvoke async, VarPool varManager, TypeFinder typeFinder, ProtocolInfo info)
         {
-            //処理可能な型であるか判断
             Type type = typeFinder.GetType(info.TypeFullName);
             if (type == null)
             {
                 throw new InformationException(string.Format(CultureInfo.CurrentCulture, ResourcesLocal.Instance.UnknownTypeInfoFormat, info.TypeFullName));
             }
-
-            //引数の解決
+            
             object[] args;
             Type[] argTypesOri;
             ResolveArgs(varManager, info.Arguments, out args, out argTypesOri);
             Type[] argTypes = GetArgTypes(typeFinder, info.OperationTypeInfo, argTypesOri);
 
-            //引数が0でかつ値型の場合
+            //value type.
             if (argTypes.Length == 0 && type.IsValueType())
             {
-                //変数登録
                 return new ReturnInfo(varManager.Add(Activator.CreateInstance(type)));
             }
 
-            //オーバーロードの解決
+            //resolve overload.
             ConstructorInfo[] constructorInfos = type.GetConstructors();
             List<ConstructorInfo> constructorList = new List<ConstructorInfo>();
             bool isObjectArrayArg = false;
@@ -210,7 +163,7 @@ namespace Friendly.Core
                 }
             }
 
-            //発見できなかった。
+            //not found.
             if (constructorList.Count == 0)
             {
                 if (isObjectArrayArg)
@@ -226,12 +179,12 @@ namespace Friendly.Core
             }
             if (constructorList.Count != 1)
             {
-                //オーバーロード解決に失敗
+                //can't resolve overload.
                 throw new InformationException(string.Format(CultureInfo.CurrentCulture, ResourcesLocal.Instance.ErrorManyFoundConstractorFormat,
                         type.Name, MakeErrorInvokeArgInfo(argTypes)));
             }
 
-            //インスタンス生成
+            //create.
             bool isCreated = false;//TODO
             object instance = null;
             async.Execute(() =>
@@ -241,83 +194,52 @@ namespace Friendly.Core
             });
             while (!isCreated) ;
 
-            //ref, outの解決
+            //resolve ref, out.
             ReflectArgsAfterInvoke(varManager, info.Arguments, args);
 
-            //変数登録
+            //entry object.
             return new ReturnInfo(varManager.Add(instance));
         }
-
-        /// <summary>
-        /// 変数破棄。
-        /// </summary>
-        /// <param name="varManager">変数管理。</param>
-        /// <param name="info">呼び出し情報。</param>
-        /// <returns>戻り値情報。</returns>
+        
         static ReturnInfo BinOff(VarPool varManager, ProtocolInfo info)
         {
             varManager.Remove(info.VarAddress);
             return new ReturnInfo();
         }
-
-        /// <summary>
-        /// 値取得処理呼び出し。
-        /// </summary>
-        /// <param name="varManager">変数管理。</param>
-        /// <param name="info">呼び出し情報。</param>
-        /// <returns>戻り値情報。</returns>
+        
         static ReturnInfo GetValue(VarPool varManager, ProtocolInfo info)
         {
-            //引数の数は0であること
             if (info.Arguments.Length != 0)
             {
                 throw new InternalException();
             }
             return new ReturnInfo(varManager.GetVarAndType(info.VarAddress).Core);
         }
-
-        /// <summary>
-        /// 値設定処理呼び出し。
-        /// </summary>
-        /// <param name="varManager">変数管理。</param>
-        /// <param name="info">呼び出し情報。</param>
-        /// <returns>戻り値情報。</returns>
+        
         static ReturnInfo SetValue(VarPool varManager, ProtocolInfo info)
         {
-            //引数の数は1であること
             if (info.Arguments.Length != 1)
             {
                 throw new InternalException();
             }
-
-            //引数の解決
+            
             object[] args;
             ResolveArgs(varManager, info.Arguments, out args);
-
-            //値の設定
+            
             varManager.SetObject(info.VarAddress, args[0]);
             return new ReturnInfo();
         }
-
-        /// <summary>
-        /// 内部要素取得処理呼び出し。
-        /// </summary>
-        /// <param name="varManager">変数管理。</param>
-        /// <param name="info">呼び出し情報。</param>
-        /// <returns>戻り値情報。</returns>
+        
         static ReturnInfo GetElements(VarPool varManager, ProtocolInfo info)
         {
-            //変数の解決
             object obj = varManager.GetVarAndType(info.VarAddress).Core;
 
-            //この処理が可能なのはIEnumerableを継承している場合
             IEnumerable enumerable = obj as IEnumerable;
             if (enumerable == null)
             {
                 throw new InformationException(ResourcesLocal.Instance.HasNotEnumerable);
             }
-
-            //要素をすべて変数登録
+            
             List<VarAddress> list = new List<VarAddress>();
             foreach (object element in enumerable)
             {
@@ -325,16 +247,7 @@ namespace Friendly.Core
             }
             return new ReturnInfo(list.ToArray());
         }
-
-        /// <summary>
-        /// 実行名称と引数によって実施するオペレーションを判断する。
-        /// 非同期実行部分以外のコードはスレッドセーフでなければならない。
-        /// </summary>
-        /// <param name="async">非同期実行用。</param>
-        /// <param name="varManager">変数管理。</param>
-        /// <param name="typeFinder">タイプ検索。</param>
-        /// <param name="info">呼び出し情報。</param>
-        /// <returns>戻り値情報。</returns>
+        
         static ReturnInfo AsyncOperation(IAsyncInvoke async, VarPool varManager, TypeFinder typeFinder, ProtocolInfo info)
         {
             Type type;
@@ -342,19 +255,16 @@ namespace Friendly.Core
             object[] args;
             Type[] argTypesOri;
             BindingFlags bind;
-
-            //実行対象の解決
+            
             ResolveInvokeTarget(varManager, typeFinder, info, out type, out obj, out args, out argTypesOri, out bind);
-
-            //第一引数は完了時結果格納変数
+            
             List<object> argTmp = new List<object>(args);
             argTmp.RemoveAt(0);
             args = argTmp.ToArray();
             List<Type> argTypeTmp = new List<Type>(argTypesOri);
             argTypeTmp.RemoveAt(0);
             argTypesOri = argTypeTmp.ToArray();
-
-            //操作解決用型情報取得
+            
             if (info.OperationTypeInfo != null)
             {
                 type = typeFinder.GetType(info.OperationTypeInfo.Target);
@@ -364,22 +274,19 @@ namespace Friendly.Core
                         ResourcesLocal.Instance.UnknownTypeInfoFormat, info.OperationTypeInfo.Target));
                 }
             }
-
-            //操作名称最適化
+            
             string operation = OptimizeOperationName(type, info.Operation, args.Length);
             Type findStartType = type;
 
-            //引数の型を取得
             Type[] argTypes = GetArgTypes(typeFinder, info.OperationTypeInfo, argTypesOri);
 
-            //操作検索
+            //find operation.
             bool isObjectArrayArg = false;
             int nameMatchCount = 0;
             bool first = true;
             bool isAmbiguousArgs = false;
             while (!isAmbiguousArgs && type != null)
             {
-                //親の型へ。
                 if (!first)
                 {
                     type = type.BaseType();
@@ -389,22 +296,19 @@ namespace Friendly.Core
                     }
                 }
                 first = false;
-
-                //フィールド
+                
                 FieldInfo field = FindField(type, bind, operation, args, ref isObjectArrayArg, ref nameMatchCount);
                 if (field != null)
                 {
                     return ExecuteField(async, varManager, info, obj, args, field);
                 }
-
-                //プロパティー
+                
                 PropertyInfo property = FindProperty(type, bind, operation, args, ref isObjectArrayArg, ref nameMatchCount);
                 if (property != null)
                 {
                     return ExecuteProperty(async, varManager, info, obj, args, property);
                 }
-
-                //メソッドと[]アクセスのプロパティー
+                
                 MethodInfo method = FindMethodOrProperty(info.OperationTypeInfo != null, type, bind, operation, argTypes,
                             ref isObjectArrayArg, ref nameMatchCount, ref isAmbiguousArgs);
                 if (method != null)
@@ -412,21 +316,10 @@ namespace Friendly.Core
                     return ExecuteMethodOrProperty(async, varManager, info, obj, args, method);
                 }
             }
-
-            //結局発見できなかった。
+            
             throw MakeNotFoundException(info, findStartType, argTypes, isObjectArrayArg, nameMatchCount, isAmbiguousArgs);
         }
 
-        /// <summary>
-        /// フィールド検索。
-        /// </summary>
-        /// <param name="type">操作実行対象タイプ。</param>
-        /// <param name="bind">操作検索バインディング。</param>
-        /// <param name="operation">操作名称。</param>
-        /// <param name="args">引数。</param>
-        /// <param name="isObjectArrayArg">操作の引数がobject[]型であったか。</param>
-        /// <param name="nameMatchCount">名前がマッチした数。</param>
-        /// <returns>フィールド情報。</returns>
         static FieldInfo FindField(Type type, BindingFlags bind, string operation, object[] args,
             ref bool isObjectArrayArg, ref int nameMatchCount)
         {
@@ -440,24 +333,21 @@ namespace Friendly.Core
             {
                 return null;
             }
-            //object[]であれば、未発見時のエラーメッセージにそれを表示してやる
+
             if (field.FieldType == typeof(object[]))
             {
                 isObjectArrayArg = true;
             }
-
-            //代入の場合は型チェック
+            
             if (args.Length == 1)
             {
                 if (args[0] == null)
                 {
-                    //null代入不可ならはじく
                     if (!IsAssignableNull(field.FieldType))
                     {
                         return null;
                     }
                 }
-                //代入可能かチェック
                 else if (!field.FieldType.IsAssignableFrom(args[0].GetType()))
                 {
                     return null;
@@ -465,30 +355,16 @@ namespace Friendly.Core
             }
             return field;
         }
-
-        /// <summary>
-        /// フィールド操作実行。
-        /// </summary>
-        /// <param name="async">非同期実行用。</param>
-        /// <param name="varManager">変数管理。</param>
-        /// <param name="info">呼び出し情報。</param>
-        /// <param name="obj">実行対象オブジェクト。</param>
-        /// <param name="args">操作実行引数。</param>
-        /// <param name="field">フィールド情報。</param>
-        /// <returns>戻り情報。</returns>
+        
         static ReturnInfo ExecuteField(IAsyncInvoke async, VarPool varManager, ProtocolInfo info,
             object obj, object[] args, FieldInfo field)
         {
-            //get
             if (args.Length == 0)
             {
-                //戻り値格納用
                 VarAddress getVar = varManager.Add(null);
 
-                //番号管理から消されないようにする
                 KeepAlive(varManager, info.Arguments, getVar);
 
-                //非同期実行
                 async.Execute(delegate
                 {
                     ReturnInfo retInfo = new ReturnInfo();
@@ -500,22 +376,17 @@ namespace Friendly.Core
                     {
                         retInfo = new ReturnInfo(new ExceptionInfo(e));
                     }
-
-                    //完了通知
+                    
                     varManager.SetObject((VarAddress)info.Arguments[0], retInfo);
-
-                    //存命状態を解く
+                    
                     FreeKeepAlive(varManager, info.Arguments, getVar);
                 });
                 return new ReturnInfo(getVar);
             }
-            //set
             else if (args.Length == 1)
             {
-                //番号管理から消されないようにする
                 KeepAlive(varManager, info.Arguments, null);
 
-                //非同期実行
                 async.Execute(delegate
                 {
                     ReturnInfo retInfo = new ReturnInfo();
@@ -528,10 +399,8 @@ namespace Friendly.Core
                         retInfo = new ReturnInfo(new ExceptionInfo(e));
                     }
 
-                    //完了通知
                     varManager.SetObject((VarAddress)info.Arguments[0], retInfo);
 
-                    //存命状態を解く
                     FreeKeepAlive(varManager, info.Arguments, null);
                 });
                 return new ReturnInfo();
@@ -539,16 +408,6 @@ namespace Friendly.Core
             throw new InternalException();
         }
         
-        /// <summary>
-        /// プロパティー検索。
-        /// </summary>
-        /// <param name="type">操作実行対象タイプ。</param>
-        /// <param name="bind">操作検索バインディング。</param>
-        /// <param name="operation">操作名称。</param>
-        /// <param name="args">引数。</param>
-        /// <param name="isObjectArrayArg">操作の引数がobject[]型であったか。</param>
-        /// <param name="nameMatchCount">名前がマッチした数。</param>
-        /// <returns>フィールド情報。</returns>
         static PropertyInfo FindProperty(Type type, BindingFlags bind, string operation, object[] args,
             ref bool isObjectArrayArg, ref int nameMatchCount)
         {
@@ -562,24 +421,21 @@ namespace Friendly.Core
             {
                 return null;
             }
-            //object[]であれば、未発見時のエラーメッセージにそれを表示してやる
+
             if (field.PropertyType == typeof(object[]))
             {
                 isObjectArrayArg = true;
             }
 
-            //代入の場合は型チェック
             if (args.Length == 1)
             {
                 if (args[0] == null)
                 {
-                    //null代入不可ならはじく
                     if (!IsAssignableNull(field.PropertyType))
                     {
                         return null;
                     }
                 }
-                //代入可能かチェック
                 else if (!field.PropertyType.IsAssignableFrom(args[0].GetType()))
                 {
                     return null;
@@ -587,30 +443,15 @@ namespace Friendly.Core
             }
             return field;
         }
-
-        /// <summary>
-        /// フィールド操作実行。
-        /// </summary>
-        /// <param name="async">非同期実行用。</param>
-        /// <param name="varManager">変数管理。</param>
-        /// <param name="info">呼び出し情報。</param>
-        /// <param name="obj">実行対象オブジェクト。</param>
-        /// <param name="args">操作実行引数。</param>
-        /// <param name="property">フィールド情報。</param>
-        /// <returns>戻り情報。</returns>
+        
         static ReturnInfo ExecuteProperty(IAsyncInvoke async, VarPool varManager, ProtocolInfo info,
             object obj, object[] args, PropertyInfo property)
         {
-            //get
             if (args.Length == 0)
             {
-                //戻り値格納用
                 VarAddress getVar = varManager.Add(null);
-
-                //番号管理から消されないようにする
+                
                 KeepAlive(varManager, info.Arguments, getVar);
-
-                //非同期実行
                 async.Execute(delegate
                 {
                     ReturnInfo retInfo = new ReturnInfo();
@@ -622,22 +463,17 @@ namespace Friendly.Core
                     {
                         retInfo = new ReturnInfo(new ExceptionInfo(e));
                     }
-
-                    //完了通知
+                    
                     varManager.SetObject((VarAddress)info.Arguments[0], retInfo);
 
-                    //存命状態を解く
                     FreeKeepAlive(varManager, info.Arguments, getVar);
                 });
                 return new ReturnInfo(getVar);
             }
-            //set
             else if (args.Length == 1)
             {
-                //番号管理から消されないようにする
                 KeepAlive(varManager, info.Arguments, null);
-
-                //非同期実行
+                
                 async.Execute(delegate
                 {
                     ReturnInfo retInfo = new ReturnInfo();
@@ -649,30 +485,16 @@ namespace Friendly.Core
                     {
                         retInfo = new ReturnInfo(new ExceptionInfo(e));
                     }
-
-                    //完了通知
+                    
                     varManager.SetObject((VarAddress)info.Arguments[0], retInfo);
-
-                    //存命状態を解く
+                    
                     FreeKeepAlive(varManager, info.Arguments, null);
                 });
                 return new ReturnInfo();
             }
             throw new InternalException();
         }
-
-        /// <summary>
-        /// メソッドorプロパティー検索。
-        /// </summary>
-        /// <param name="isUseOperationTypeInfo">OperationTypeInfoを使っているか。</param>
-        /// <param name="type">操作実行対象タイプ。</param>
-        /// <param name="bind">操作検索バインディング。</param>
-        /// <param name="operation">操作名称。</param>
-        /// <param name="argTypes">引数のタイプ。</param>
-        /// <param name="isObjectArrayArg">操作の引数がobject[]型であったか。</param>
-        /// <param name="nameMatchCount">名前がマッチした数。</param>
-        /// <param name="isAmbiguousArgs">あいまいな引数であるか。</param>
-        /// <returns>メソッド情報。</returns>
+        
         static MethodInfo FindMethodOrProperty(bool isUseOperationTypeInfo, Type type, BindingFlags bind,
             string operation, Type[] argTypes, ref bool isObjectArrayArg, ref int nameMatchCount, ref bool isAmbiguousArgs)
         {
@@ -680,15 +502,13 @@ namespace Friendly.Core
             List<MethodInfo> methodList = new List<MethodInfo>();
             for (int i = 0; i < methods.Length; i++)
             {
-                //プロパティー指定の場合、メソッドの中からsetter,getterを探して使用する
                 if (methods[i].Name != operation)
                 {
                     continue;
                 }
 
                 nameMatchCount++;
-
-                //引数がマッチするかチェック
+                
                 ParameterInfo[] paramInfos = methods[i].GetParameters();
                 bool isPerfect;
                 bool isObjectArrayArgTmp = false;
@@ -707,13 +527,11 @@ namespace Friendly.Core
                     isObjectArrayArg = true;
                 }
             }
-
-            //マッチする関数が一つだけ見つかった場合は発見したのでループ終了
+            
             if (methodList.Count == 1)
             {
                 return methodList[0];
             }
-            //複数発見された場合は、オーバーロードの解決ができない。
             else if (1 < methodList.Count)
             {
                 isAmbiguousArgs = true;
@@ -721,30 +539,17 @@ namespace Friendly.Core
             return null;
         }
 
-        /// <summary>
-        /// メソッドorプロパティー実行。
-        /// </summary>
-        /// <param name="async">非同期実行用。</param>
-        /// <param name="varManager">変数管理。</param>
-        /// <param name="info">呼び出し情報。</param>
-        /// <param name="obj">実行対象オブジェクト。</param>
-        /// <param name="args">操作実行引数。</param>
-        /// <param name="method">メソッド情報。</param>
-        /// <returns>戻り情報。</returns>
         static ReturnInfo ExecuteMethodOrProperty(IAsyncInvoke async, VarPool varManager,
             ProtocolInfo info, object obj, object[] args, MethodInfo method)
         {
-            //戻り値
             VarAddress handle = null;
             if (method.ReturnParameter.ParameterType != typeof(void))
             {
                 handle = varManager.Add(null);
             }
-
-            //番号管理から消されないようにする
+            
             KeepAlive(varManager, info.Arguments, handle);
-
-            //非同期実行
+            
             async.Execute(delegate
             {
                 ReturnInfo retInfo = new ReturnInfo();
@@ -755,9 +560,8 @@ namespace Friendly.Core
                     {
                         varManager.SetObject(handle, retObj);
                     }
-                    //ref, outの解決
                     List<object> retArgsTmp = new List<object>();
-                    retArgsTmp.Add(null); //完了通知変数を戻す。しかし、ここではまだ格納しない
+                    retArgsTmp.Add(null);
                     retArgsTmp.AddRange(args);
                     ReflectArgsAfterInvoke(varManager, info.Arguments, retArgsTmp.ToArray());
                 }
@@ -765,27 +569,14 @@ namespace Friendly.Core
                 {
                     retInfo = new ReturnInfo(new ExceptionInfo(e));
                 }
-
-                //完了通知
                 varManager.SetObject((VarAddress)info.Arguments[0], retInfo);
-
-                //存命状態を解く
+                
                 FreeKeepAlive(varManager, info.Arguments, handle);
             });
 
             return new ReturnInfo(handle);
         }
-
-        /// <summary>
-        /// 操作を見つけることが出来なかった場合の例外作成。
-        /// </summary>
-        /// <param name="info">操作情報。</param>
-        /// <param name="findStartType">検索開始の型。</param>
-        /// <param name="argTypes">型情報。</param>
-        /// <param name="isObjectArrayArg">操作の引数がobject[]型であったか。</param>
-        /// <param name="nameMatchCount">名前がマッチした数。</param>
-        /// <param name="isAmbiguousArgs">あいまいな引数であるか。</param>
-        /// <returns>例外。</returns>
+        
         static InformationException MakeNotFoundException(ProtocolInfo info, Type findStartType, Type[] argTypes,
                             bool isObjectArrayArg, int nameMatchCount, bool isAmbiguousArgs)
         {
@@ -814,12 +605,6 @@ namespace Friendly.Core
             }
         }
 
-        /// <summary>
-        /// 存命登録。
-        /// </summary>
-        /// <param name="varManager">変数管理。</param>
-        /// <param name="arguments">引数情報。</param>
-        /// <param name="handle">戻り値ハンドル。</param>
         static void KeepAlive(VarPool varManager, object[] arguments, VarAddress handle)
         {
             if (handle != null)
@@ -835,13 +620,7 @@ namespace Friendly.Core
                 }
             }
         }
-
-        /// <summary>
-        /// 存命登録解除。
-        /// </summary>
-        /// <param name="varManager">変数管理。</param>
-        /// <param name="arguments">引数情報。</param>
-        /// <param name="handle">戻り値ハンドル。</param>
+        
         static void FreeKeepAlive(VarPool varManager, object[] arguments, VarAddress handle)
         {
             if (handle != null)
@@ -857,14 +636,7 @@ namespace Friendly.Core
                 }
             }
         }
-
-        /// <summary>
-        /// 操作名称最適化。
-        /// </summary>
-        /// <param name="type">対象のタイプ。</param>
-        /// <param name="operation">操作名称。</param>
-        /// <param name="argsLength">引数の数。</param>
-        /// <returns>最適化された操作名称。</returns>
+        
         static string OptimizeOperationName(Type type, string operation, int argsLength)
         {
             if (operation.IndexOf("[") != -1)
@@ -881,25 +653,13 @@ namespace Friendly.Core
             }
             return operation;
         }
-
-        /// <summary>
-        /// 呼び出し対象の解決。
-        /// </summary>
-        /// <param name="varManager">変数管理。</param>
-        /// <param name="typeFinder">タイプ検索。</param>
-        /// <param name="info">呼び出し情報。</param>
-        /// <param name="type">タイプ。</param>
-        /// <param name="targetObj">オブジェクト。</param>
-        /// <param name="args">引数。</param>
-        /// <param name="argTypes">引数タイプ。</param>
-        /// <param name="bind">バインディング。</param>
+        
         static void ResolveInvokeTarget(VarPool varManager, TypeFinder typeFinder, ProtocolInfo info, out Type type, out object targetObj, out object[] args, out Type[] argTypes, out BindingFlags bind)
         {
             type = null;
             targetObj = null;
             bind = new BindingFlags();
-
-            //static呼び出し時
+            
             if (info.VarAddress == null)
             {
                 type = typeFinder.GetType(info.TypeFullName);
@@ -909,7 +669,6 @@ namespace Friendly.Core
                 }
                 bind.IsStatic = true;
             }
-            //オブジェクトに対する呼び出し
             else
             {
                 VarAndType varAndType = varManager.GetVarAndType(info.VarAddress);
@@ -920,30 +679,15 @@ namespace Friendly.Core
                 }
                 type = varAndType.Type;
             }
-
-            //引数の解決
             ResolveArgs(varManager, info.Arguments, out args, out argTypes);
         }
 
-        /// <summary>
-        /// 引数の解決。
-        /// </summary>
-        /// <param name="varManager">変数管理。</param>
-        /// <param name="argsInfo">引数情報。</param>
-        /// <param name="args">引数。</param>
         internal static void ResolveArgs(VarPool varManager, object[] argsInfo, out object[] args)
         {
             Type[] argTypes;
             ResolveArgs(varManager, argsInfo, out args, out argTypes);
         }
 
-        /// <summary>
-        /// 引数の解決。
-        /// </summary>
-        /// <param name="varManager">変数管理。</param>
-        /// <param name="argsInfo">引数情報。</param>
-        /// <param name="args">引数。</param>
-        /// <param name="argTypes">引数の型。</param>
         internal static void ResolveArgs(VarPool varManager, object[] argsInfo, out object[] args, out Type[] argTypes)
         {
             args = new object[argsInfo.Length];
@@ -951,8 +695,7 @@ namespace Friendly.Core
             for (int i = 0; i < argsInfo.Length; i++)
             {
                 VarAddress handle = argsInfo[i] as VarAddress;
-
-                //値の場合
+                
                 if (handle == null)
                 {
                     args[i] = argsInfo[i];
@@ -961,7 +704,6 @@ namespace Friendly.Core
                         argTypes[i] = args[i].GetType();
                     }
                 }
-                //変数の場合は登録されているオブジェクトに変換
                 else
                 {
                     VarAndType varAndType = varManager.GetVarAndType(handle);
@@ -971,12 +713,6 @@ namespace Friendly.Core
             }
         }
 
-        /// <summary>
-        /// 呼び出し後の引数反映。
-        /// </summary>
-        /// <param name="varManager">変数管理。</param>
-        /// <param name="argsInfo">引数情報。</param>
-        /// <param name="args">引数。</param>
         internal static void ReflectArgsAfterInvoke(VarPool varManager, object[] argsInfo, object[] args)
         {
             if (argsInfo.Length != args.Length)
@@ -992,14 +728,7 @@ namespace Friendly.Core
                 }
             }
         }
-
-        /// <summary>
-        /// 引数型情報取得。
-        /// </summary>
-        /// <param name="typeFinder">タイプ検索。</param>
-        /// <param name="operationTypeInfo">操作型情報。</param>
-        /// <param name="argTypesOri">元引数。</param>
-        /// <returns>型情報</returns>
+        
         static Type[] GetArgTypes(TypeFinder typeFinder, OperationTypeInfo operationTypeInfo, Type[] argTypesOri)
         {
             List<Type> argTypes = new List<Type>();
@@ -1018,8 +747,7 @@ namespace Friendly.Core
                     }
                     argTypes.Add(type);
                 }
-
-                //object[]指定された場合の特殊処理
+                
                 if (operationTypeInfo.Arguments.Length == 1 &&
                     operationTypeInfo.Arguments[0] == typeof(object[]).ToString() &&
                     argTypesOri.Length != 1)
@@ -1036,12 +764,7 @@ namespace Friendly.Core
             }
             return argTypes.ToArray();
         }
-
-        /// <summary>
-        /// 引数型からエラー情報を作成する。
-        /// </summary>
-        /// <param name="argTypes">引数型情報。</param>
-        /// <returns>エラー情報。</returns>
+        
         static string MakeErrorInvokeArgInfo(Type[] argTypes)
         {
             StringBuilder builder = new StringBuilder();
@@ -1055,22 +778,12 @@ namespace Friendly.Core
             }
             return builder.ToString();
         }
-
-        /// <summary>
-        /// パラメータが一致しているか。
-        /// </summary>
-        /// <param name="isUseOperationTypeInfo">OperationTypeInfoを使っているか。</param>
-        /// <param name="args">引数情報。</param>
-        /// <param name="paramInfos">パラメータ情報。</param>
-        /// <param name="isPerfect">完全一致であるか。</param>
-        /// <param name="isObjectArrayArg">オブジェクト配列の引数であったか。</param>
-        /// <returns>パラメータが一致しているか。</returns>
+        
         static bool IsMatchParameter(bool isUseOperationTypeInfo, Type[] args, ParameterInfo[] paramInfos, out bool isPerfect, out bool isObjectArrayArg)
         {
             isObjectArrayArg = false;
             if (paramInfos.Length == 1)
             {
-                //ret, outの場合は修飾を外す
                 Type paramType = (paramInfos[0].ParameterType.IsByRef) ?
                     paramInfos[0].ParameterType.GetElementType() : paramInfos[0].ParameterType;
                 if (paramType == typeof(object[]))
@@ -1089,7 +802,6 @@ namespace Friendly.Core
             {
                 if (args[j] == null)
                 {
-                    //null代入不可ならはじく
                     if (!IsAssignableNull(paramInfos[j].ParameterType))
                     {
                         return false;
@@ -1097,32 +809,27 @@ namespace Friendly.Core
                     isPerfect = false;
                     continue;
                 }
-
-                //OperationTypeInfoを使っていなくて、ret, outの場合は修飾を外す
+                
                 Type paramType = (!isUseOperationTypeInfo && paramInfos[j].ParameterType.IsByRef) ?
                     paramInfos[j].ParameterType.GetElementType() : paramInfos[j].ParameterType;
-
-                //完全一致
+                
                 if (args[j] == paramType)
                 {
                     continue;
                 }
-
-                //OperationTypeInfoを使っている場合はByRefが一致しなければならない
+                
                 if (isUseOperationTypeInfo && paramType.IsByRef != args[j].IsByRef)
                 {
                     return false;
                 }
 
                 isPerfect = false;
-
-                //代入チェック時はref,outの修飾を外す
+                
                 if (paramType.IsByRef)
                 {
                     paramType = paramType.GetElementType();
                 }
-
-                //代入可能かの判定
+                
                 if (!paramType.IsAssignableFrom(args[j]))
                 {
                     return false;
@@ -1131,12 +838,7 @@ namespace Friendly.Core
             return true;
         }
 
-        /// <summary>
-        /// NULL代入可能であるか。
-        /// </summary>
-        /// <param name="type">タイプ。</param>
-        /// <returns>NULL代入可能であるか。</returns>
-        private static bool IsAssignableNull(Type type)
+        static bool IsAssignableNull(Type type)
         {
             if (!type.IsValueType())
             {
