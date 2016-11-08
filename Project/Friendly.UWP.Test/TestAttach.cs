@@ -49,8 +49,15 @@ namespace Friendly.UWP.Test
                 var check = new CheckBox(tree.ByType(CheckBox.TypeFullName).Single());
                 check.EmulateCheck(true);
 
+                //it can access all .net api 
+                //invoke static property.
+                var mainPage = app.Type("Windows.UI.Xaml.Window").Current.Content.Content;
+
+                //invoke method defined by user.
+                string result = mainPage.MyFunc(5);
+                Assert.AreEqual("5", result);
+
                 //change color
-                var mainPage = app.CurrentWindow.Content.Dynamic().Content;
                 var color = app.Type("Windows.UI.Colors").Blue;
                 var brush = app.Type("Windows.UI.Xaml.Media.SolidColorBrush")(color);
                 mainPage.Content.Background = brush;

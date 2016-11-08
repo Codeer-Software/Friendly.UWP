@@ -12,6 +12,8 @@ namespace TargetApp
             listBox.ItemsSource = new object[] { "a", "b", "c" };
         }
 
+        private string MyFunc(int value) => value.ToString();
+
         private void button1_Click(object sender, RoutedEventArgs e)
         {
             button1.Content = "★";
