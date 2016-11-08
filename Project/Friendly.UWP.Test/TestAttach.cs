@@ -22,34 +22,34 @@ namespace Friendly.UWP.Test
                 }
             }))
             {
-                //Visual Tree取得
+                //get visual tree.
                 var tree = app.CurrentWindow.Content.VisualTree();
 
-                //テキストボックス
+                //textbox
                 var textBox = new TextBox(tree.ByType(TextBox.TypeFullName).Single());
                 textBox.EmulateChangeText("abc");
 
-                //ボタン
+                //button
                 var button = new Button(tree.ByBinding("Execute").Single());
                 button.EmulateClick();
 
-                //コンボボックス
+                //combobox
                 var comboBox = new ComboBox(tree.ByType(ComboBox.TypeFullName).Single());
                 comboBox.EmulateChangeSelectedIndex(2);
 
-                //リストボックス
+                //listbox
                 var listBox = new ListBox(tree.ByType(ListBox.TypeFullName).Single());
                 listBox.EmulateChangeSelectedIndex(2);
 
-                //ラジオボタン
+                //radiobutton
                 var radioButton = new RadioButton(tree.ByType(RadioButton.TypeFullName).Single());
                 radioButton.EmulateCheck(true);
 
-                //チェックボタン
+                //check button
                 var check = new CheckBox(tree.ByType(CheckBox.TypeFullName).Single());
                 check.EmulateCheck(true);
 
-                //背景色変更
+                //change color
                 var mainPage = app.CurrentWindow.Content.Dynamic().Content;
                 var color = app.Type("Windows.UI.Colors").Blue;
                 var brush = app.Type("Windows.UI.Xaml.Media.SolidColorBrush")(color);

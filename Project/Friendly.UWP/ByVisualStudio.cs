@@ -12,6 +12,7 @@ using VSHTC.Friendly.PinInterface;
 
 namespace Friendly.UWP
 {
+    //こいつだけ、LoadDllができるようにしておくかな。
     public class ByVisualStudio : IUWPControl
     {
         public string Solution { get; private set; }
@@ -56,11 +57,8 @@ namespace Friendly.UWP
             var dte = GetDTE2(_visualStudio);
 
             //VisualStudioの設定変更
-            if (ChangeVisualStudioSetting != null)
-            {
-                ChangeVisualStudioSetting(_visualStudio, PinHelper.GetAppVar(dte));
-            }
-            
+            ChangeVisualStudioSetting?.Invoke(_visualStudio, PinHelper.GetAppVar(dte));
+
             //ブレイクを全部無効にする
             if (!ContinueDebuging)
             {
