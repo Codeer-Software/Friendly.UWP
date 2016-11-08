@@ -50,7 +50,7 @@ namespace Friendly.UWP.Test
                 check.EmulateCheck(true);
 
                 //it can access all .net api 
-                //invoke static property.
+                //var mainPage = Windows.UI.Xaml.Window.Current.Content.Content;
                 var mainPage = app.Type("Windows.UI.Xaml.Window").Current.Content.Content;
 
                 //invoke method defined by user.
